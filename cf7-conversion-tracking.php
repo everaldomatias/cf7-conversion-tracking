@@ -33,7 +33,16 @@ if ( ! class_exists( 'CF7_Conversion_Tracking' ) ) :
 		function __construct() {
 			// Load plugin text domain.
 			add_action( 'init', array( $this, 'load_plugin_textdomain' ) );
-			# code...
+			
+			// Verify CF7 dependencies.
+			if ( defined( 'WPCF7_VERSION' ) &&  version_compare( WPCF7_VERSION, '4.5', '>=' ) ) {
+				if ( is_admin() && ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX ) ) {
+					$this->admin_includes();
+				}
+				$this->includes();
+			} else {
+				add_action( 'admin_notices', array( $this, 'cf7_is_missing_notice' ) );
+			}
 		}
 
 		/**
@@ -57,6 +66,19 @@ if ( ! class_exists( 'CF7_Conversion_Tracking' ) ) :
 		}
 
 		/**
+		 * Includes.
+		 */
+		protected function includes() {
+			include_once( 'includes/class-cf7-conversion-tracking-print-tags.php' );
+		}
+		/**
+		 * Admin includes.
+		 */
+		protected function admin_includes() {
+			include_once( 'includes/class-cf7-conversion-tracking-admin.php' );
+		}
+
+		/**
 		 * Fired for each blog when the plugin is activated.
 		 */
 		public static function activate() {
@@ -69,6 +91,15 @@ if ( ! class_exists( 'CF7_Conversion_Tracking' ) ) :
 		 */
 		public function load_plugin_textdomain() {
 			load_plugin_textdomain( 'cf7-conversion-tracking', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
+		}
+
+		/**
+		 * Contact Form 7 missing notice.
+		 *
+		 * @return string Admin notice.
+		 */
+		public function cf7_is_missing_notice() {
+			echo '<div class="error"><p><strong>' . __( 'Contact Form 7 Conversion Tracking', 'cf7-conversion-tracking' ) . '</strong> ' . sprintf( __( 'works only with %s, in version 4.5 or later, please install or upgrade your installation!', 'cf7-conversion-tracking' ), '<a href="https://wordpress.org/plugins/contact-form-7/">' . __( 'Contact Form 7', 'cf7-conversion-tracking' ) . '</a>' ) . '</p></div>';
 		}
 	}
 
